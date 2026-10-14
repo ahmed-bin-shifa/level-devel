@@ -16,7 +16,7 @@
 </section>
 <aside class="side">
 <section class="panel"><h2>▰ LEVEL SELECT</h2><div id="levels"></div><div class="meter"><span id="progress"></span></div></section>
-<section class="panel"><h2>♫ THE LOOP</h2><div class="soundline"><strong id="soundStatus">Audio waiting for permission</strong><br>Voice chant + original low-fi beat. Repeats while the game is running.</div><button class="btn secondary soundtoggle" id="soundToggle">ENABLE AUDIO</button></section>
+<section class="panel"><h2>♫ THE LOOP</h2><div class="soundline"><strong id="soundStatus">Audio waiting for permission</strong><br>Voice chant + original low-fi beat. Repeats while the game is running.</div></section>
 <section class="panel"><h2>MISSION BRIEF</h2><div class="soundline">Find the glowing exit. Learn nothing from your last mistake. The game is absolutely not cheating. Probably.</div></section>
 </aside></div>
 <div class="controls"><div class="desktophelp"><span class="key">←</span><span class="key">→</span> MOVE &nbsp; <span class="key">SPACE</span> JUMP &nbsp; <span class="key">R</span> RESTART</div><div class="touch"><button id="left" aria-label="Move left">←</button><button id="jump" aria-label="Jump">↑</button><button id="right" aria-label="Move right">→</button></div><div>CHECKPOINTS: NONE. EMOTIONAL DAMAGE: MAX.</div></div>
@@ -25,7 +25,7 @@
 (()=>{'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),W=1280,H=720;
 const $=id=>document.getElementById(id);let level=0,player,platforms=[],hazards=[],goal,cam=0,dead=false,won=false,running=false,attempts=1,startTime=0,best=0,frame=0,toastTimer=0,audioCtx=null,beatTimer=null,voiceTimer=null,audioOn=false,voiceBusy=false;
-const chant='ahmed bin samyul sirrr muhammad tamatar sirrr kabab ijaz umer';
+const chant='Ah-med bin Sam-yool sir. Muham-mad ta-ma-tar sir. Ka-bab. Ee-jaaz. Oo-mer. Sam-yool.';
 const stageData=[
 {name:'THE FRIENDLY FLOOR',sub:'A totally normal start',length:3000,trap:'one',sky:['#1c4158','#0a1727']},
 {name:'TRUST ISSUES',sub:'Some floors are just vibes',length:3600,trap:'fake',sky:['#46324c','#111827']},
@@ -85,11 +85,11 @@ if(running&&!won){ctx.fillStyle='#ffffffaa';ctx.font='bold 12px system-ui';ctx.f
 }
 let last=0;function loop(t){let dt=Math.min(.035,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}buildLevel();requestAnimationFrame(loop);
 $('start').addEventListener('click',()=>{if(level===0&&won===false&&attempts>1){level=0;attempts=1;buildLevel()}startGame()});
-$('audioStart').addEventListener('click',startAudio);$('soundToggle').addEventListener('click',()=>audioOn?stopAudio():startAudio());
-function startAudio(){if(audioOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();audioOn=true;$('soundStatus').textContent='LOOP ACTIVE · CHANT + BEAT';$('soundToggle').textContent='MUTE AUDIO';$('audioStart').textContent='♫ AUDIO ENABLED';beat();speakLoop();}catch(e){$('soundStatus').textContent='Audio not supported in this browser';}}
+$('audioStart').addEventListener('click',startAudio);
+function startAudio(){if(audioOn)return;try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();audioCtx.resume();audioOn=true;$('soundStatus').textContent='LOOP ACTIVE · CHANT + BEAT';$('audioStart').textContent='♫ AUDIO ENABLED';beat();speakLoop();}catch(e){$('soundStatus').textContent='Audio not supported in this browser';}}
 function beat(){if(!audioOn||!audioCtx)return;const now=audioCtx.currentTime;const kick=audioCtx.createOscillator(),gain=audioCtx.createGain();kick.type='sine';kick.frequency.setValueAtTime(105,now);kick.frequency.exponentialRampToValueAtTime(42,now+.14);gain.gain.setValueAtTime(.22,now);gain.gain.exponentialRampToValueAtTime(.001,now+.19);kick.connect(gain);gain.connect(audioCtx.destination);kick.start(now);kick.stop(now+.2);
 if(Math.floor(frame*2)%2===0){const osc=audioCtx.createOscillator(),g2=audioCtx.createGain();osc.type='triangle';osc.frequency.value=65;g2.gain.setValueAtTime(.055,now);g2.gain.exponentialRampToValueAtTime(.001,now+.11);osc.connect(g2);g2.connect(audioCtx.destination);osc.start(now);osc.stop(now+.12)}beatTimer=setTimeout(beat,460);}
-function speakLoop(){if(!audioOn)return;if(!('speechSynthesis'in window)){return}if(speechSynthesis.speaking){voiceTimer=setTimeout(speakLoop,1500);return}const u=new SpeechSynthesisUtterance(chant);u.rate=.83;u.pitch=.68;u.volume=.95;const voices=speechSynthesis.getVoices();const en=voices.find(v=>/en/i.test(v.lang));if(en)u.voice=en;u.onend=()=>{if(audioOn)voiceTimer=setTimeout(speakLoop,650)};u.onerror=()=>{if(audioOn)voiceTimer=setTimeout(speakLoop,2500)};speechSynthesis.speak(u);}
-function stopAudio(){audioOn=false;clearTimeout(beatTimer);clearTimeout(voiceTimer);if('speechSynthesis'in window)speechSynthesis.cancel();if(audioCtx)audioCtx.suspend();$('soundStatus').textContent='Audio paused';$('soundToggle').textContent='ENABLE AUDIO';$('audioStart').textContent='♫ ENABLE THE CHAOS';}
+function speakLoop(){if(!audioOn)return;if(!('speechSynthesis'in window)){return}if(speechSynthesis.speaking){voiceTimer=setTimeout(speakLoop,1500);return}const u=new SpeechSynthesisUtterance(chant);u.lang='en-US';u.rate=.76;u.pitch=.82;u.volume=1;const voices=speechSynthesis.getVoices();const preferred=voices.find(v=>/Google US English/i.test(v.name))||voices.find(v=>/Microsoft.*(Aria|Jenny|Guy|Zira|David|Natural)/i.test(v.name)&&/^en[-_]/i.test(v.lang))||voices.find(v=>/Samantha/i.test(v.name))||voices.find(v=>/^en[-_]US/i.test(v.lang))||voices.find(v=>/^en/i.test(v.lang));if(preferred)u.voice=preferred;u.onend=()=>{if(audioOn)voiceTimer=setTimeout(speakLoop,650)};u.onerror=()=>{if(audioOn)voiceTimer=setTimeout(speakLoop,2500)};speechSynthesis.speak(u);}
+function stopAudio(){audioOn=false;clearTimeout(beatTimer);clearTimeout(voiceTimer);if('speechSynthesis'in window)speechSynthesis.cancel();if(audioCtx)audioCtx.suspend();$('soundStatus').textContent='Audio paused';$('audioStart').textContent='♫ ENABLE THE CHAOS';}
 })();
 </script></body></html>
